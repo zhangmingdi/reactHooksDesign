@@ -1,98 +1,51 @@
-import React, { memo } from 'react';
+import React, { memo, } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
-let stateList = []
-let index = 0
+const reducer = (state, action) => {
 
-function useState(initState) {
-  stateList[index] = stateList[index] || initState
-  const currentIndex = index
-  console.log('初始化为0', stateList, currentIndex)
-  function setState(newState) {
-    console.log('改变第一次的状态', stateList, currentIndex)
-    stateList[currentIndex] = newState
+  if (action.type === 'success') {
+    return state + 1
+  } else {
+    return state
+  }
+
+}
+
+let lastState
+
+function useReducer(reducer, initState) {
+  lastState = lastState || initState
+
+  function dispatch(action) {
+    lastState = reducer(lastState, action)
     render()
   }
 
-
-  console.log('初始化的状态', stateList)
-
-  return [stateList[index++], setState]
+  return [lastState, dispatch]
 
 }
-
-let lastCallback
-let lastCallbackDependences
-
-function useCallback(callback, dependences) {
-
-  if (lastCallbackDependences) {
-    const isChange = !lastCallbackDependences.every((item, index) => {
-      return item === dependences[index]
-    })
-
-    if (isChange) {
-      lastCallback = callback
-      lastCallbackDependences = dependences
-    }
-  } else {
-    lastCallback = callback
-    lastCallbackDependences = dependences
-  }
-  return lastCallback
-}
-
-
-let lastMemo
-let lastMemoDependences
-
-function useMemo(callBack, dependences) {
-
-  if (lastMemoDependences) {
-    const isChange = !lastMemoDependences.every((item, index) => {
-      return item === dependences[index]
-    })
-    if (isChange) {
-      lastMemo = callBack()
-      lastCallbackDependences = dependences
-    }
-  } else {
-    lastMemo = callBack()
-    lastMemoDependences = dependences
-  }
-  return lastMemo
-}
-
-function _Child({ data, addClick }) {
-
-  console.log('ssss', '子组件已经更新了')
-  return (
-    <button onClick={addClick}>{data.number}</button>
-  )
-}
-
-const Child = memo(_Child)
 
 const App = () => {
 
-  let [number, setNumber] = useState(0)
-  let [name, setName] = useState('zhengfeg')
+  const [number, dispatch] = useReducer(reducer, 0)
 
-  let addClick = useCallback(() => setNumber(number + 1), [number])
-  let data = useMemo(() => ({ number }), [number])
+
 
   return (
     <div>
-      <input value={name} type="text" onChange={e => { setName(e.target.value) }} />
-      <Child data={data} addClick={addClick} />
+      <p>{number}</p>
+      <button
+        onClick={() => {
+          dispatch({ type: 'success' })
+        }}
+      >{number}</button>
     </div>
   )
 }
 
 function render() {
-  index = 0
   ReactDOM.render(
     <App />,
     document.getElementById('root')
