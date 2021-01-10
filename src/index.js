@@ -1,46 +1,65 @@
-import React, { memo, } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
-const reducer = (state, action) => {
+let lastDependences
 
-  if (action.type === 'success') {
-    return state + 1
+function useEffect1(fn, dependences) {
+  if (lastDependences) {
+    const isChange = !lastDependences.every((item, index) => {
+      return item === dependences[index]
+    })
+
+    if (isChange) {
+      setTimeout(fn, 0)
+      lastDependences = dependences
+    }
+
   } else {
-    return state
+    lastDependences = dependences
+    setTimeout(fn, 0)
   }
-
 }
 
-let lastState
+let lastLayoutEffectDependences
+function useELayoutEffect1(fn, dependences) {
 
-function useReducer(reducer, initState) {
-  lastState = lastState || initState
+  if (lastLayoutEffectDependences) {
+    const isChange = !lastLayoutEffectDependences.every((item, index) => {
+      return item === dependences[index]
+    })
 
-  function dispatch(action) {
-    lastState = reducer(lastState, action)
-    render()
+    if (isChange) {
+      queueMicrotask(fn)
+      lastLayoutEffectDependences = dependences
+    }
+
+  } else {
+    queueMicrotask(fn)
+    lastLayoutEffectDependences = dependences
   }
-
-  return [lastState, dispatch]
-
 }
 
 const App = () => {
 
-  const [number, dispatch] = useReducer(reducer, 0)
+  const [num, setNum] = useState(0)
 
+  useELayoutEffect1(() => {
+    console.log('微任务之后渲染执行之前', num)
+  }, [num])
 
+  useEffect1(() => {
+    console.log('num的执行', num)
+  }, [num])
 
   return (
     <div>
-      <p>{number}</p>
-      <button
-        onClick={() => {
-          dispatch({ type: 'success' })
-        }}
-      >{number}</button>
+      <p>{num}</p>
+      <button onClick={() => {
+        const i = num + 1
+        setNum(i)
+      }}>num:{num}</button>
     </div>
   )
 }
